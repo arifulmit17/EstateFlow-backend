@@ -1,0 +1,378 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                String              @id @default(cuid())
+  name              String
+  email             String              @unique
+  password          String?
+  avatar            String?
+  phone             String?
+  bio               String?
+  role              Role                @default(BUYER)
+  isActive          Boolean             @default(true)
+  isVerified        Boolean             @default(false)
+
+  // Authentication
+  provider          AuthProvider        @default(CREDENTIALS)
+  refreshToken      String?
+  lastLoginAt       DateTime?
+
+  // Relations
+  properties        Property[]          @relation("AgentProperties")
+  savedProperties   SavedProperty[]
+  reviews           Review[]
+  appointments      Appointment[]       @relation("BuyerAppointments")
+  agentAppointments Appointment[]       @relation("AgentAppointments")
+
+  sentMessages      Message[]           @relation("SenderMessages")
+  receivedMessages  Message[]           @relation("ReceiverMessages")
+
+  aiHistories       AIHistory[]
+  notifications     Notification[]
+  blogs             Blog[]
+  reports           Report[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+enum Role {
+  BUYER
+  AGENT
+  ADMIN
+}
+
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+}
+
+model Property {
+  id                  String                @id @default(cuid())
+
+  title               String
+  slug                String                @unique
+  description         String
+  shortDescription    String?
+
+  price               Float
+  area                Float
+  bedrooms            Int
+  bathrooms           Int
+  parking             Int                  @default(0)
+
+  propertyType        PropertyType
+  listingType         ListingType
+  status              PropertyStatus       @default(PENDING)
+
+  address             String
+  city                String
+  state               String?
+  country             String
+  zipCode             String
+
+  latitude            Float?
+  longitude           Float?
+
+  thumbnail           String?
+  virtualTourUrl      String?
+  videoUrl            String?
+
+  isFeatured          Boolean              @default(false)
+  isAvailable         Boolean              @default(true)
+
+  views               Int                  @default(0)
+
+  // SEO & AI
+  seoTitle            String?
+  seoDescription      String?
+  aiDescription       String?
+  aiTags              String[]
+
+  // Relations
+  agentId             String
+  agent               User                 @relation("AgentProperties", fields: [agentId], references: [id], onDelete: Cascade)
+
+  images              PropertyImage[]
+  amenities           PropertyAmenity[]
+  reviews             Review[]
+  appointments        Appointment[]
+  savedBy             SavedProperty[]
+  inquiries           Inquiry[]
+  reports             Report[]
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([title])
+  @@index([city])
+  @@index([price])
+  @@index([propertyType])
+  @@index([listingType])
+  @@index([status])
+  @@index([agentId])
+}
+
+enum PropertyType {
+  APARTMENT
+  HOUSE
+  VILLA
+  OFFICE
+  COMMERCIAL
+  LAND
+  STUDIO
+}
+
+enum ListingType {
+  SALE
+  RENT
+}
+
+enum PropertyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SOLD
+  RENTED
+}
+
+model PropertyImage {
+  id          String    @id @default(cuid())
+
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  url         String
+  isPrimary   Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([propertyId])
+}
+
+model Amenity {
+  id          String               @id @default(cuid())
+  name        String               @unique
+  icon        String?
+
+  properties  PropertyAmenity[]
+}
+
+model PropertyAmenity {
+  id          String      @id @default(cuid())
+
+  propertyId  String
+  amenityId   String
+
+  property    Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amenity     Amenity     @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, amenityId])
+}
+
+model Review {
+  id          String      @id @default(cuid())
+
+  rating      Int
+  comment     String
+
+  userId      String
+  propertyId  String
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property    Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([propertyId])
+  @@index([userId])
+}
+
+model Appointment {
+  id            String              @id @default(cuid())
+
+  propertyId    String
+  buyerId       String
+  agentId       String
+
+  appointmentAt DateTime
+  status        AppointmentStatus   @default(PENDING)
+
+  note          String?
+
+  property      Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  buyer         User                @relation("BuyerAppointments", fields: [buyerId], references: [id], onDelete: Cascade)
+  agent         User                @relation("AgentAppointments", fields: [agentId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([buyerId])
+  @@index([agentId])
+  @@index([propertyId])
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model Message {
+  id            String        @id @default(cuid())
+
+  senderId      String
+  receiverId    String
+
+  content       String
+  isRead        Boolean       @default(false)
+
+  sender        User          @relation("SenderMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver      User          @relation("ReceiverMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime      @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Inquiry {
+  id            String          @id @default(cuid())
+
+  propertyId    String
+  name          String
+  email         String
+  phone         String?
+  message       String
+
+  property      Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime        @default(now())
+
+  @@index([propertyId])
+}
+
+model SavedProperty {
+  id            String        @id @default(cuid())
+
+  userId        String
+  propertyId    String
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime      @default(now())
+
+  @@unique([userId, propertyId])
+}
+
+model AIHistory {
+  id            String      @id @default(cuid())
+
+  userId        String
+  type          AIType
+
+  prompt        String
+  response      String
+
+  tokensUsed    Int?
+  responseTime  Float?
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime    @default(now())
+
+  @@index([userId])
+  @@index([type])
+}
+
+enum AIType {
+  PROPERTY_DESCRIPTION
+  SMART_RECOMMENDATION
+  CHAT_ASSISTANT
+  INVESTMENT_ANALYZER
+  IMAGE_CAPTIONING
+  PROPERTY_TAGGING
+}
+
+model Notification {
+  id            String              @id @default(cuid())
+
+  userId        String
+
+  title         String
+  message       String
+
+  type          NotificationType
+  isRead        Boolean             @default(false)
+
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime            @default(now())
+
+  @@index([userId])
+}
+
+enum NotificationType {
+  MESSAGE
+  APPOINTMENT
+  PROPERTY
+  SYSTEM
+  AI
+}
+
+model Blog {
+  id              String        @id @default(cuid())
+
+  title           String
+  slug            String        @unique
+  content         String
+  thumbnail       String?
+
+  isPublished     Boolean       @default(false)
+
+  authorId        String
+  author          User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Report {
+  id              String          @id @default(cuid())
+
+  reporterId      String
+  propertyId      String?
+
+  reason          String
+  status          ReportStatus    @default(PENDING)
+
+  reporter        User            @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  property        Property?       @relation(fields: [propertyId], references: [id])
+
+  createdAt       DateTime        @default(now())
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+  REJECTED
+}

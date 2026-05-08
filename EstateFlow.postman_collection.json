@@ -1,0 +1,255 @@
+{
+  "info": {
+    "_postman_id": "f2df6029-4f2b-4764-b67b-4e4f82064420",
+    "name": "EstateFlow API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"12345678\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"12345678\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/users"
+          }
+        },
+        {
+          "name": "Get User By Id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Name\"\n}" },
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"isActive\": true\n}" },
+            "url": "{{baseUrl}}/api/users/{{userId}}/status"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        {
+          "name": "Create Payment Intent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ideaId\": \"{{resourceId}}\",\n  \"amount\": 1000\n}"
+            },
+            "url": "{{baseUrl}}/api/payment/create-payment-intent"
+          }
+        },
+        {
+          "name": "Stripe Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "stripe-signature", "value": "replace-with-valid-signature" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"id\": \"evt_test\"\n}" },
+            "url": "{{baseUrl}}/api/webhook"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Blog",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/blog" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/blog/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Sample\",\n  \"content\": \"Sample\"\n}" }, "url": "{{baseUrl}}/api/blog" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated\"\n}" }, "url": "{{baseUrl}}/api/blog/{{resourceId}}" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/blog/{{resourceId}}" } }
+      ]
+    },
+    {
+      "name": "AI History",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/ai-history" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/ai-history/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"prompt\": \"Example\",\n  \"response\": \"Example\"\n}" }, "url": "{{baseUrl}}/api/ai-history" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"prompt\": \"Updated\"\n}" }, "url": "{{baseUrl}}/api/ai-history/{{resourceId}}" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/ai-history/{{resourceId}}" } }
+      ]
+    },
+    {
+      "name": "Appointment",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/appointment" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/appointment/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"date\": \"2026-05-10\",\n  \"time\": \"10:00\"\n}" }, "url": "{{baseUrl}}/api/appointment" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"confirmed\"\n}" }, "url": "{{baseUrl}}/api/appointment/{{resourceId}}" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/appointment/{{resourceId}}" } }
+      ]
+    },
+    {
+      "name": "Inquiry",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/inquiry" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/inquiry/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"message\": \"I am interested\"\n}" }, "url": "{{baseUrl}}/api/inquiry" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"message\": \"Updated inquiry\"\n}" }, "url": "{{baseUrl}}/api/inquiry/{{resourceId}}" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/inquiry/{{resourceId}}" } }
+      ]
+    },
+    {
+      "name": "Message",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/message" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/message/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"text\": \"Hello\"\n}" }, "url": "{{baseUrl}}/api/message" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"text\": \"Updated\"\n}" }, "url": "{{baseUrl}}/api/message/{{resourceId}}" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/message/{{resourceId}}" } }
+      ]
+    },
+    {
+      "name": "Notification",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/notification" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/notification/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"New Notification\"\n}" }, "url": "{{baseUrl}}/api/notification" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated\"\n}" }, "url": "{{baseUrl}}/api/notification/{{resourceId}}" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/notification/{{resourceId}}" } }
+      ]
+    },
+    {
+      "name": "Property",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/property" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/property/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Sample Property\",\n  \"price\": 100000\n}" }, "url": "{{baseUrl}}/api/property" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"price\": 120000\n}" }, "url": "{{baseUrl}}/api/property/{{resourceId}}" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/property/{{resourceId}}" } }
+      ]
+    },
+    {
+      "name": "Report",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/report" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/report/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Spam\"\n}" }, "url": "{{baseUrl}}/api/report" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Updated reason\"\n}" }, "url": "{{baseUrl}}/api/report/{{resourceId}}" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/report/{{resourceId}}" } }
+      ]
+    },
+    {
+      "name": "Review",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/review" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/review/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Great\"\n}" }, "url": "{{baseUrl}}/api/review" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"comment\": \"Updated comment\"\n}" }, "url": "{{baseUrl}}/api/review/{{resourceId}}" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/review/{{resourceId}}" } }
+      ]
+    },
+    {
+      "name": "Saved Property",
+      "item": [
+        { "name": "Get All", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/saved-property" } },
+        { "name": "Get By Id", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/saved-property/{{resourceId}}" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"propertyId\": \"{{resourceId}}\"\n}" }, "url": "{{baseUrl}}/api/saved-property" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/saved-property/{{resourceId}}" } }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "resourceId", "value": "" }
+  ]
+}

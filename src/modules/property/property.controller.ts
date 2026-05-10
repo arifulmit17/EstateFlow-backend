@@ -32,6 +32,29 @@ const getPropertyById = async (req: Request<{ id: string }>, res: Response) => {
   }
 };
 
+const getPropertyBySlug = async (
+  req: Request<{ slug: string }>,
+  res: Response
+) => {
+  try {
+    const { slug } = req.params;
+
+    const property = await PropertyService.getPropertyBySlug(slug);
+
+    res.status(200).json({
+      success: true,
+      data: property,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
 const createProperty = async (req: Request, res: Response) => {
   try {
     const property = await PropertyService.createProperty(req.body);
@@ -82,6 +105,7 @@ const deleteProperty = async (req: Request<{ id: string }>, res: Response) => {
 export const PropertyController = {
   getAllProperties,
   getPropertyById,
+  getPropertyBySlug,
   createProperty,
   updateProperty,
   deleteProperty,

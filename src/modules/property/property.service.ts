@@ -33,6 +33,23 @@ const getPropertyById = async (id: string) => {
   return property;
 };
 
+const getPropertyBySlug = async (slug: string) => {
+  const property = await prisma.property.findUnique({
+    where: { slug },
+    include: {
+      agent: true,
+      images: true,
+      amenities: true,
+      reviews: true,
+      appointments: true,
+    },
+  });
+
+  return property;
+};
+
+
+
 const createProperty = async (payload: any) => {
   const requiredFields = [
     "title",
@@ -100,6 +117,7 @@ const deleteProperty = async (id: string) => {
 export const PropertyService = {
   getAllProperties,
   getPropertyById,
+  getPropertyBySlug,
   createProperty,
   updateProperty,
   deleteProperty,

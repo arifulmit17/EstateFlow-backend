@@ -6,15 +6,13 @@ import { AuthService } from "./auth.service";
 const registerUser = async (req: Request, res: Response) => {
   try {
     const result = await AuthService.createUserAuth(req.body);
-
-    // remove password from response
-    
+    const { password, ...userWithoutPassword } = result.user;
 
     res.status(201).json({
       success: true,
       message: "User registered successfully",
       token: result.token,
-      data: result.user,
+      data: userWithoutPassword,
       
     });
   } catch (error: any) {
@@ -32,12 +30,13 @@ const loginUser = async (req: Request, res: Response) => {
 
     const { password, ...userWithoutPassword } = result.user;
     
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", result.token, {
-  httpOnly: true,
-  sameSite: "none",   // 🔥 change this
-  secure: true,
-  maxAge: 7 * 24 * 60 * 60 * 1000
-})
+      httpOnly: true,
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
     res.status(200).json({
       success: true,
       message: "Login successful",

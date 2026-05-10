@@ -5,6 +5,7 @@ const router = Router();
 
 router.get("/", PropertyController.getAllProperties);
 router.get("/:id", PropertyController.getPropertyById);
+router.get("/slug/:slug", PropertyController.getPropertyBySlug);
 router.post("/", PropertyController.createProperty);
 router.put("/:id", PropertyController.updateProperty);
 router.delete("/:id", PropertyController.deleteProperty);

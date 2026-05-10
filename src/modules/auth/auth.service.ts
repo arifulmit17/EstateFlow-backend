@@ -4,10 +4,16 @@ import { prisma } from "../../lib/prisma";
 import jwt from "jsonwebtoken";
 
 
-const secret="ssdfsfsdfsdfsfsfsdfgswrwer"
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET is not configured");
+  }
+  return secret;
+};
 
 const createUserAuth = async (payload: any) => {
-  const { password, email, name } = payload;
+  const { password, email, name, role } = payload;
 
   // ✅ Check if user exists
   const existingUser = await prisma.user.findUnique({
@@ -21,12 +27,22 @@ const createUserAuth = async (payload: any) => {
   // 🔐 Hash password
   const hashedPass = await bcrypt.hash(password, 8);
 
+  type UserRole = "BUYER" | "AGENT" | "ADMIN";
+  const normalizedRole =
+    typeof role === "string" ? role.toUpperCase() : undefined;
+  const allowedRoles: UserRole[] = ["BUYER", "AGENT", "ADMIN"];
+  const userRole =
+    normalizedRole && allowedRoles.includes(normalizedRole as UserRole)
+      ? (normalizedRole as UserRole)
+      : "BUYER";
+
   // ✅ Create user
   const user = await prisma.user.create({
     data: {
       name,
       email,
       password: hashedPass,
+      role: userRole,
     },
   });
 
@@ -38,7 +54,7 @@ const createUserAuth = async (payload: any) => {
       email: user.email,
       role: user.role,
     },
-    secret,
+    getJwtSecret(),
     { expiresIn: "7d" }
   );
 
@@ -61,6 +77,9 @@ const loginUserAuth=async (payload:any)=>{
    if(!user){
         throw new Error("User not found")
     }
+    if (!user.password) {
+      throw new Error("Password login is not available for this account");
+    }
     const verifypass=await bcrypt.compare(payload.password,user.password)
     if(!verifypass){
         throw new Error("Invalid credential")
@@ -72,7 +91,7 @@ const loginUserAuth=async (payload:any)=>{
         email:user.email,
         role:user.role,
     }
-    const token=jwt.sign(userData,secret,{expiresIn:"7d"})
+    const token=jwt.sign(userData,getJwtSecret(),{expiresIn:"7d"})
 
     return {
         token,

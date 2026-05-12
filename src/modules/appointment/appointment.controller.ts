@@ -32,6 +32,31 @@ const getAppointmentById = async (req: Request<{ id: string }>, res: Response) =
   }
 };
 
+
+const getAppointmentsByAgentId = async (
+  req: Request<{ agentId: string }>,
+  res: Response
+) => {
+  try {
+    const { agentId } = req.params;
+
+    const appointments =
+      await AppointmentService.getAppointmentsByAgentId(
+        agentId
+      );
+
+    res.status(200).json({
+      success: true,
+      data: appointments,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 const createAppointment = async (req: Request, res: Response) => {
   try {
     const appointment = await AppointmentService.createAppointment(req.body);
@@ -85,4 +110,5 @@ export const AppointmentController = {
   createAppointment,
   updateAppointment,
   deleteAppointment,
+  getAppointmentsByAgentId,
 };

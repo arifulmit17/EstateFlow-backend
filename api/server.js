@@ -92,9 +92,15 @@ var prisma = new PrismaClient({ adapter });
 
 // src/modules/auth/auth.service.ts
 import jwt from "jsonwebtoken";
-var secret = "ssdfsfsdfsdfsfsfsdfgswrwer";
+var getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET is not configured");
+  }
+  return secret;
+};
 var createUserAuth = async (payload) => {
-  const { password, email, name } = payload;
+  const { password, email, name, role } = payload;
   const existingUser = await prisma.user.findUnique({
     where: { email }
   });
@@ -102,11 +108,15 @@ var createUserAuth = async (payload) => {
     throw new Error("User already exists");
   }
   const hashedPass = await bcrypt.hash(password, 8);
+  const normalizedRole = typeof role === "string" ? role.toUpperCase() : void 0;
+  const allowedRoles = ["BUYER", "AGENT", "ADMIN"];
+  const userRole = normalizedRole && allowedRoles.includes(normalizedRole) ? normalizedRole : "BUYER";
   const user = await prisma.user.create({
     data: {
       name,
       email,
-      password: hashedPass
+      password: hashedPass,
+      role: userRole
     }
   });
   const token = jwt.sign(
@@ -116,7 +126,7 @@ var createUserAuth = async (payload) => {
       email: user.email,
       role: user.role
     },
-    secret,
+    getJwtSecret(),
     { expiresIn: "7d" }
   );
   return {
@@ -133,6 +143,9 @@ var loginUserAuth = async (payload) => {
   if (!user) {
     throw new Error("User not found");
   }
+  if (!user.password) {
+    throw new Error("Password login is not available for this account");
+  }
   const verifypass = await bcrypt.compare(payload.password, user.password);
   if (!verifypass) {
     throw new Error("Invalid credential");
@@ -143,7 +156,7 @@ var loginUserAuth = async (payload) => {
     email: user.email,
     role: user.role
   };
-  const token = jwt.sign(userData, secret, { expiresIn: "7d" });
+  const token = jwt.sign(userData, getJwtSecret(), { expiresIn: "7d" });
   return {
     token,
     user
@@ -159,11 +172,12 @@ var AuthService = {
 var registerUser = async (req, res) => {
   try {
     const result = await AuthService.createUserAuth(req.body);
+    const { password, ...userWithoutPassword } = result.user;
     res.status(201).json({
       success: true,
       message: "User registered successfully",
       token: result.token,
-      data: result.user
+      data: userWithoutPassword
     });
   } catch (error) {
     res.status(400).json({
@@ -177,11 +191,11 @@ var loginUser = async (req, res) => {
   try {
     const result = await AuthService.loginUserAuth(req.body);
     const { password, ...userWithoutPassword } = result.user;
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", result.token, {
       httpOnly: true,
-      sameSite: "none",
-      // 🔥 change this
-      secure: true,
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
       maxAge: 7 * 24 * 60 * 60 * 1e3
     });
     res.status(200).json({
@@ -221,7 +235,6 @@ var AuthController = {
 import jwt2 from "jsonwebtoken";
 var authMiddleware = async (req, res, next) => {
   try {
-    console.log("Cookies:", req.cookies);
     const token = await req.cookies?.token;
     console.log("token:", token);
     if (!token) {
@@ -229,7 +242,6 @@ var authMiddleware = async (req, res, next) => {
     }
     const decoded = jwt2.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
-    console.log("user:", req.user);
     next();
   } catch (error) {
     res.status(401).json({
@@ -257,9 +269,16 @@ var getAllUsers = async () => {
       id: true,
       name: true,
       email: true,
+      avatar: true,
+      phone: true,
+      bio: true,
       role: true,
       isActive: true,
-      createdAt: true
+      isVerified: true,
+      provider: true,
+      lastLoginAt: true,
+      createdAt: true,
+      updatedAt: true
     }
   });
   return users;
@@ -823,6 +842,23 @@ var getAppointmentById = async (id) => {
   });
   return appointment;
 };
+var getAppointmentsByAgentId = async (agentId) => {
+  console.log("agent id", agentId);
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      agentId
+    },
+    include: {
+      property: true,
+      buyer: true,
+      agent: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+  return appointments;
+};
 var createAppointment = async (payload) => {
   const appointment = await prisma.appointment.create({
     data: payload,
@@ -857,7 +893,8 @@ var AppointmentService = {
   getAppointmentById,
   createAppointment,
   updateAppointment,
-  deleteAppointment
+  deleteAppointment,
+  getAppointmentsByAgentId
 };
 
 // src/modules/appointment/appointment.controller.ts
@@ -882,6 +919,23 @@ var getAppointmentById2 = async (req, res) => {
     res.status(200).json({
       success: true,
       data: appointment
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+var getAppointmentsByAgentId2 = async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const appointments = await AppointmentService.getAppointmentsByAgentId(
+      agentId
+    );
+    res.status(200).json({
+      success: true,
+      data: appointments
     });
   } catch (error) {
     res.status(500).json({
@@ -939,13 +993,15 @@ var AppointmentController = {
   getAppointmentById: getAppointmentById2,
   createAppointment: createAppointment2,
   updateAppointment: updateAppointment2,
-  deleteAppointment: deleteAppointment2
+  deleteAppointment: deleteAppointment2,
+  getAppointmentsByAgentId: getAppointmentsByAgentId2
 };
 
 // src/modules/appointment/appointment.router.ts
 var router6 = Router3();
 router6.get("/", AppointmentController.getAllAppointments);
 router6.get("/:id", AppointmentController.getAppointmentById);
+router6.get("/agent/:agentId", AppointmentController.getAppointmentsByAgentId);
 router6.post("/", AppointmentController.createAppointment);
 router6.put("/:id", AppointmentController.updateAppointment);
 router6.delete("/:id", AppointmentController.deleteAppointment);
@@ -1419,6 +1475,19 @@ var getPropertyById = async (id) => {
   });
   return property;
 };
+var getPropertyBySlug = async (slug) => {
+  const property = await prisma.property.findUnique({
+    where: { slug },
+    include: {
+      agent: true,
+      images: true,
+      amenities: true,
+      reviews: true,
+      appointments: true
+    }
+  });
+  return property;
+};
 var createProperty = async (payload) => {
   const requiredFields = [
     "title",
@@ -1460,6 +1529,7 @@ var createProperty = async (payload) => {
   return property;
 };
 var updateProperty = async (id, payload) => {
+  console.log("property", payload);
   const property = await prisma.property.update({
     where: { id },
     data: payload,
@@ -1479,6 +1549,7 @@ var deleteProperty = async (id) => {
 var PropertyService = {
   getAllProperties,
   getPropertyById,
+  getPropertyBySlug,
   createProperty,
   updateProperty,
   deleteProperty
@@ -1503,6 +1574,21 @@ var getPropertyById2 = async (req, res) => {
   try {
     const { id } = req.params;
     const property = await PropertyService.getPropertyById(id);
+    res.status(200).json({
+      success: true,
+      data: property
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+var getPropertyBySlug2 = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const property = await PropertyService.getPropertyBySlug(slug);
     res.status(200).json({
       success: true,
       data: property
@@ -1561,6 +1647,7 @@ var deleteProperty2 = async (req, res) => {
 var PropertyController = {
   getAllProperties: getAllProperties2,
   getPropertyById: getPropertyById2,
+  getPropertyBySlug: getPropertyBySlug2,
   createProperty: createProperty2,
   updateProperty: updateProperty2,
   deleteProperty: deleteProperty2
@@ -1570,8 +1657,9 @@ var PropertyController = {
 var router10 = Router7();
 router10.get("/", PropertyController.getAllProperties);
 router10.get("/:id", PropertyController.getPropertyById);
+router10.get("/slug/:slug", PropertyController.getPropertyBySlug);
 router10.post("/", PropertyController.createProperty);
-router10.put("/:id", PropertyController.updateProperty);
+router10.patch("/:id", PropertyController.updateProperty);
 router10.delete("/:id", PropertyController.deleteProperty);
 var property_router_default = router10;
 
@@ -2004,13 +2092,12 @@ app.post(
 app.use(express5.json());
 app.use(
   cors({
-    origin: "http://localhost:4000",
-    // origin: "https://green-community-frontend.vercel.app",
+    // origin: "http://localhost:4000",
+    origin: "https://estate-flow-online.vercel.app",
     credentials: true
   })
 );
 app.use((req, res, next) => {
-  console.log("Raw Cookie Header:", req.headers.cookie);
   next();
 });
 app.post("/webhook", (req, res) => {

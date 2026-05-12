@@ -23,6 +23,30 @@ const getAppointmentById = async (id: string) => {
   return appointment;
 };
 
+const getAppointmentsByAgentId = async (
+  agentId: string
+) => {
+  console.log("agent id",agentId);
+  const appointments =
+    await prisma.appointment.findMany({
+      where: {
+        agentId,
+      },
+
+      include: {
+        property: true,
+        buyer: true,
+        agent: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+  return appointments;
+};
+
 const createAppointment = async (payload: any) => {
   const appointment = await prisma.appointment.create({
     data: payload,
@@ -61,4 +85,5 @@ export const AppointmentService = {
   createAppointment,
   updateAppointment,
   deleteAppointment,
+  getAppointmentsByAgentId,
 };

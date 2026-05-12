@@ -11,9 +11,16 @@ const getAllUsers = async () => {
       id: true,
       name: true,
       email: true,
+      avatar: true,
+      phone: true,
+      bio: true,
       role: true,
       isActive: true,
+      isVerified: true,
+      provider: true,
+      lastLoginAt: true,
       createdAt: true,
+      updatedAt: true,
     },
   });
 

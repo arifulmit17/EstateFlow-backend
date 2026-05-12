@@ -8,7 +8,7 @@ export const  authMiddleware = async (
   next: NextFunction
 ) => {
   try {
-    console.log("Cookies:", req.cookies)
+    // console.log("Cookies:", req.cookies)
     const token =await req.cookies?.token
     console.log("token:", token);
 
@@ -19,7 +19,7 @@ export const  authMiddleware = async (
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
       
     req.user = decoded;
-    console.log("user:", req.user);
+    // console.log("user:", req.user);
 
     next();
   } catch (error) {

@@ -32,6 +32,30 @@ const getPropertyById = async (req: Request<{ id: string }>, res: Response) => {
   }
 };
 
+const getPropertiesByAgentId = async (
+  req: Request<{ agentId: string }>,
+  res: Response
+) => {
+  try {
+    const { agentId } = req.params;
+
+    const properties =
+      await PropertyService.getPropertiesByAgentId(
+        agentId
+      );
+
+    res.status(200).json({
+      success: true,
+      data: properties,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 const getPropertyBySlug = async (
   req: Request<{ slug: string }>,
   res: Response
@@ -105,6 +129,7 @@ const deleteProperty = async (req: Request<{ id: string }>, res: Response) => {
 export const PropertyController = {
   getAllProperties,
   getPropertyById,
+  getPropertiesByAgentId,
   getPropertyBySlug,
   createProperty,
   updateProperty,

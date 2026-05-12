@@ -29,12 +29,12 @@ app.use(express.json())
 app.use(
   cors({
     origin: "http://localhost:4000",
-    // origin: "https://green-community-frontend.vercel.app",
+    // origin: "https://estate-flow-online.vercel.app",
     credentials: true,
   })
 )
 app.use((req, res, next) => {
-  console.log("Raw Cookie Header:", req.headers.cookie)
+  // console.log("Raw Cookie Header:", req.headers.cookie)
   next()
 })
 
